@@ -2,7 +2,7 @@
 
 
 <p align="center">
-  <img src="docs/figures/proposed_framework.png" alt="Proposed framework figure placeholder" width="950">
+  <img src="docs/figures/Proposed_architecture.png" alt="Proposed framework figure" width="950">
 </p>
 
 
