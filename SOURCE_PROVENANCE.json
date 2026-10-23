@@ -1,0 +1,91 @@
+{
+  "source_variant": "protocol_deeper_heads",
+  "mask_ratio_in_export": 0.3,
+  "masked_patches": 59,
+  "total_patches": 196,
+  "upstream_TransUNet_commit": "02ef0010b36eb8328b5e689eadaf613602edf9b8",
+  "files": {
+    "breast_benchmark/__init__.py": {
+      "original_sha256": "fe222fafa0067a82a8e0fcc3e069bc2a41f36837974151221998528763e9e07e",
+      "export_change": "unchanged",
+      "exported_sha256": "fe222fafa0067a82a8e0fcc3e069bc2a41f36837974151221998528763e9e07e"
+    },
+    "breast_benchmark/classification.py": {
+      "original_sha256": "10d3eddfd742eeca5ed049610edc426e191639a204af33c8fa35a01561202e4e",
+      "export_change": "unchanged",
+      "exported_sha256": "10d3eddfd742eeca5ed049610edc426e191639a204af33c8fa35a01561202e4e"
+    },
+    "breast_benchmark/data.py": {
+      "original_sha256": "b0b2bf914349f4e146a9f4c7ca19787473a7f07153f3b32a00f939daeacf74c6",
+      "export_change": "unchanged",
+      "exported_sha256": "b0b2bf914349f4e146a9f4c7ca19787473a7f07153f3b32a00f939daeacf74c6"
+    },
+    "breast_benchmark/deeper_heads.py": {
+      "original_sha256": "68518f7f95fbf4e256d5eb4f9fe043e607ba2208da2504553c119e1b13b0ab98",
+      "export_change": "unchanged",
+      "exported_sha256": "68518f7f95fbf4e256d5eb4f9fe043e607ba2208da2504553c119e1b13b0ab98"
+    },
+    "breast_benchmark/losses.py": {
+      "original_sha256": "f643148d6a1bb093aa4fe085601255fe64137ceddcdb1b0728bb0f852407d205",
+      "export_change": "unchanged",
+      "exported_sha256": "f643148d6a1bb093aa4fe085601255fe64137ceddcdb1b0728bb0f852407d205"
+    },
+    "breast_benchmark/metrics.py": {
+      "original_sha256": "1e0101c2cd54fb33850c66b6db029ec6213fe1104b9a8e6eb6f50de5a676ed1d",
+      "export_change": "unchanged",
+      "exported_sha256": "1e0101c2cd54fb33850c66b6db029ec6213fe1104b9a8e6eb6f50de5a676ed1d"
+    },
+    "breast_benchmark/prepare.py": {
+      "original_sha256": "f08e7b4a3e81982b567f93c2f288eb5382f2e95d37a1f1eb3bf77d923a1723c5",
+      "export_change": "unchanged",
+      "exported_sha256": "f08e7b4a3e81982b567f93c2f288eb5382f2e95d37a1f1eb3bf77d923a1723c5"
+    },
+    "breast_benchmark/size_regression.py": {
+      "original_sha256": "95a4638cd392aca319dd6d063bea7d48852a93ce1ee5f01e08ad91de0b4b02b8",
+      "export_change": "unchanged",
+      "exported_sha256": "95a4638cd392aca319dd6d063bea7d48852a93ce1ee5f01e08ad91de0b4b02b8"
+    },
+    "breast_benchmark/summarize.py": {
+      "original_sha256": "666dbe4034ee86f787983d630429b596080de399ef793d0a8e8e8b9bfa5aa072",
+      "export_change": "unchanged",
+      "exported_sha256": "666dbe4034ee86f787983d630429b596080de399ef793d0a8e8e8b9bfa5aa072"
+    },
+    "breast_benchmark/train.py": {
+      "original_sha256": "9ecc9f2c1d2ad535df0025ceaf2aad79af4a91df846649db51edada54a9054fb",
+      "export_change": "CLI defaults: deeper heads, 30% masking, 200 epochs, batch 24, patience 40, 0.90 + three 1/30 loss weights, no external initialization required.",
+      "exported_sha256": "876a9740c6c697467b2d671175c35cdd75846d09f062375f99ede52a621693b6"
+    },
+    "breast_benchmark/models.py": {
+      "original_sha256": "cca7e07a3e869aef45c01f609867b47e647047c2b55c6af787e261697a9fe782",
+      "export_change": "Retained four TransUNetMAESize head variants; unrelated comparators removed; missing-file messages made portable.",
+      "exported_sha256": "082fc5b1c665308501fffd9fe3319cc904caf8edb22a21b440c07315fd529464"
+    },
+    "external/TransUNet/LICENSE": {
+      "original_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "export_change": "unchanged third-party source",
+      "exported_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    "external/TransUNet/README.md": {
+      "original_sha256": "319d29d057c10070eeb7e3caa0557e4e4b6675b3b93349e0d7d30725f8075a59",
+      "export_change": "unchanged third-party source",
+      "exported_sha256": "319d29d057c10070eeb7e3caa0557e4e4b6675b3b93349e0d7d30725f8075a59"
+    },
+    "external/TransUNet/networks/vit_seg_configs.py": {
+      "original_sha256": "661639dec10545b2038d95a2414b76ea9552607613889cab2c25ef3ec1bc453c",
+      "export_change": "unchanged third-party source",
+      "exported_sha256": "661639dec10545b2038d95a2414b76ea9552607613889cab2c25ef3ec1bc453c"
+    },
+    "external/TransUNet/networks/vit_seg_modeling.py": {
+      "original_sha256": "ab855c7dadb7af71a1ac09adba4d75c74a9867f89480c65eb9abb64461f3fa3f",
+      "export_change": "unchanged third-party source",
+      "exported_sha256": "ab855c7dadb7af71a1ac09adba4d75c74a9867f89480c65eb9abb64461f3fa3f"
+    },
+    "external/TransUNet/networks/vit_seg_modeling_resnet_skip.py": {
+      "original_sha256": "bb66abb598e38be27d738399cd2e99fe21844001045215f417fe606812df3ee5",
+      "export_change": "unchanged third-party source",
+      "exported_sha256": "bb66abb598e38be27d738399cd2e99fe21844001045215f417fe606812df3ee5"
+    }
+  },
+  "trained_or_pretrained_weights_included": false,
+  "datasets_included": false
+}

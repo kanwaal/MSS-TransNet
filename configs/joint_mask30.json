@@ -1,0 +1,19 @@
+{
+  "model": "TransUNetMAESizeDeepHeads",
+  "epochs": 200,
+  "early_stopping_patience": 40,
+  "batch_size": 24,
+  "learning_rate": 0.0001,
+  "weight_decay": 0.0001,
+  "gradient_clip": 0.5,
+  "segmentation_loss_weight": 0.9,
+  "classification_loss_weight": 0.03333333333333333,
+  "tumor_size_loss_weight": 0.03333333333333333,
+  "reconstruction_loss_weight": 0.03333333333333333,
+  "mae_mask_ratio": 0.3,
+  "seed": 42,
+  "amp": true,
+  "pretrained": false,
+  "ultrasound_noise": false,
+  "reconstruction_input_noise": false
+}

@@ -1,0 +1,16 @@
+{
+  "mask_ratio": 0.3,
+  "trained_weights_distributed": false,
+  "supervised_algorithm_and_evaluation_unchanged": true,
+  "all_four_variants_masks_shapes_gradients_passed": true,
+  "portable_entry_points_passed": true,
+  "ssl_synthetic_one_epoch_passed": true,
+  "ssl_to_joint_checkpoint_transfer_passed": true,
+  "joint_synthetic_one_epoch_passed": true,
+  "independent_evaluation_matches_training_evaluation": true,
+  "single_image_prediction_passed": true,
+  "temporary_synthetic_checkpoints_deleted": true,
+  "files_before_validation_report": 34,
+  "all_files_text_source_or_svg": true,
+  "passed": true
+}

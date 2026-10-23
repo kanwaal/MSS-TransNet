@@ -1,0 +1,9 @@
+# Install a mutually compatible PyTorch/torchvision pair for your CUDA or CPU runtime.
+torch>=2.4,<3
+torchvision>=0.19
+numpy>=1.24
+Pillow>=9.4
+scipy>=1.10
+scikit-learn>=1.3
+ml-collections>=0.1.1
+tqdm>=4.66
