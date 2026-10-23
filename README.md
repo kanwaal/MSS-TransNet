@@ -1,18 +1,11 @@
-# Proposed breast ultrasound framework — deeper heads, 30% masking
+# MSS-TransNet: multitask self-supervised transformer learning for breast ultrasound segmentation and classification
 
-A source-only implementation of TransUNet with segmentation, masked reconstruction,
-tumor classification and relative tumor-area estimation. The default version has
-independent deeper bottleneck heads: **768 → 256 → 128 → output**.
-
-**No trained weights, pretrained weights, datasets or experiment outputs are included.**
-The reconstruction masking default is **30%** in SSL and joint training: 59 of 196
-randomly distributed 16×16 patches at 224×224 resolution (30.102% after rounding).
 
 <p align="center">
-  <img src="docs/figures/proposed_framework.svg" alt="Proposed framework figure placeholder" width="950">
+  <img src="docs/figures/proposed_framework.png" alt="Proposed framework figure placeholder" width="950">
 </p>
 
-*Figure placeholder: replace `docs/figures/proposed_framework.svg` with the final illustration.*
+
 
 ## Installation
 
@@ -142,30 +135,11 @@ probabilities and estimated relative area. It does not run reconstruction at inf
 |---|---|---|
 | `TransUNetMAESizeDeepHeads` (default) | Deeper MLP | Deeper MLP |
 | `TransUNetMAESizeDeepClassifier` | Deeper MLP | Original linear |
-| `TransUNetMAESizeDeepArea` | Original linear | Deeper MLP |
-| `TransUNetMAESize` | Original linear | Original linear |
+| `TransUNetMAESizeDeepArea` | only linear | Deeper MLP |
+| `TransUNetMAESize` | only linear | Original linear |
 
 Choose a variant with `--model`. All variants retain the shared encoder, original
 segmentation decoder and four-layer reconstruction decoder. Detailed head shapes,
 parameter counts, targets, masking and objective definitions are in
 [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Results and provenance
-
-This release changes the masking setting to 30% as requested. **No performance is
-claimed for this deeper-head, 30% configuration.** Archived deeper-head experiments
-used 75% masking; the best recorded BUSI DSC of 86.42% used the original linear heads.
-The historical deeper-head variant did not produce that best result.
-
-Model modules, supervised trainer and metrics come from the isolated
-`protocol_deeper_heads` implementation. Export edits prune unrelated comparator
-registrations, make file messages portable and set documented CLI defaults. Optional
-SSL, evaluation, prediction and export checks are portable entry points added for
-this release. Source hashes and edits are recorded in `SOURCE_PROVENANCE.json`.
-
-TransUNet's Apache-2.0 license is preserved in `external/TransUNet/LICENSE`.
-See [third-party notices](THIRD_PARTY_NOTICES.md). No new license is assigned to
-project-specific code by this packaging step.
-
-Upload the contents of this folder to your GitHub repository. Keep `.gitignore`,
-replace the framework figure when ready, and supply datasets/weights separately.
