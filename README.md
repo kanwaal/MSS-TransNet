@@ -26,6 +26,17 @@ Training has two phases:
 2. **Semi-supervised multitask learning (SML).** All four branches are then
    trained jointly, with segmentation as the primary objective.
 
+![MSS-Trans-Net framework](docs/figures/framework.png)
+
+*Architecture of MSS-Trans-Net and its two training phases. A shared
+CNN–transformer encoder supplies a CNN reconstruction decoder, a segmentation
+branch combining CNN decoding with transformer refinement, and independent
+classification and relative-area regression heads. Green arrows mark the
+self-supervised phase (masked training images, no annotations); blue arrows mark
+the semi-supervised multitask phase. ρ is the predicted relative lesion area and
+𝒵 the diagnostic class. The example ultrasound image and mask are from the BUSI
+dataset (Al-Dhabyani et al., 2020).*
+
 This repository provides a PyTorch implementation with:
 
 - data preparation for BUSI (five-fold evaluation) and BUS-BRA (patient-disjoint
@@ -35,22 +46,7 @@ This repository provides a PyTorch implementation with:
   limited-target fine-tuning and full-target training);
 - prediction for a single image.
 
-Datasets and model weights are not included.
-
-```mermaid
-flowchart LR
-    I[Ultrasound image 224 x 224] --> E[Shared R50-ViT-B/16 encoder]
-    E --> C[CNN decoder with skip connections]
-    C --> Q[Transformer refinement]
-    Q --> S[Lesion mask]
-    E --> P[Mean-pooled tokens]
-    P --> K[Classification head]
-    P --> A[Relative-area head]
-    I --> M[59 of 196 patches hidden]
-    M --> E2[Shared encoder, same weights]
-    E2 --> R[CNN reconstruction decoder]
-    R --> X[Reconstructed image]
-```
+Datasets are not included; see [Dataset information](#dataset-information).
 
 ## Dataset information
 
@@ -337,8 +333,8 @@ BibTeX entries are in `REFERENCES.bib`; citation metadata is in `CITATION.cff`.
 
 The code in this repository is released under the Apache License 2.0 (`LICENSE`).
 Third-party components in `mss_transnet/_vendor/` keep their original licenses,
-as listed in `NOTICE.md`. The datasets and pretrained weights are not covered by
-this license and remain under their providers' terms.
+as listed in `NOTICE.md`. The datasets and the ImageNet initialization weights
+are not covered by this license and remain under their providers' terms.
 
 Contributions are welcome:
 
