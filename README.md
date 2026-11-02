@@ -26,7 +26,7 @@ Training has two phases:
 2. **Semi-supervised multitask learning (SML).** All four branches are then
    trained jointly, with segmentation as the primary objective.
 
-![MSS-Trans-Net framework](docs/figures/framework.png)
+![MSS-Trans-Net framework](/framework.png)
 
 *Architecture of MSS-Trans-Net and its two training phases. A shared
 CNN–transformer encoder supplies a CNN reconstruction decoder, a segmentation
