@@ -1,14 +1,23 @@
 cff-version: 1.2.0
-message: "Please cite the MSS-Trans-Net manuscript and the TransUNet 2024 reference below when using this implementation."
-title: "MSS-Trans-Net: breast ultrasound multitask implementation based on TransUNet"
+message: "If you use this software, please cite it as below."
+title: "MSS-Trans-Net: Multitask semi-supervised learning with transformer-based network for breast cancer diagnosis in ultrasound scans"
 type: software
-version: 1.1.0
+version: 1.0.0
+license: Apache-2.0
 repository-code: "https://github.com/kanwaal/MSS-TransNet"
 authors:
   - family-names: Kanwal
     given-names: Mehreen
+    affiliation: "Department of Computer Science and Artificial Intelligence, Dongguk University"
   - family-names: Son
     given-names: Yunsik
+    affiliation: "Department of Computer Science and Artificial Intelligence, Dongguk University"
+keywords:
+  - breast ultrasound
+  - lesion segmentation
+  - multitask learning
+  - semi-supervised learning
+  - masked image reconstruction
 references:
   - type: article
     title: "TransUNet: Rethinking the U-Net architecture design for medical image segmentation through the lens of transformers"

@@ -1,0 +1,28 @@
+{
+  "seed": 42,
+  "device": "cuda:0",
+  "amp": true,
+  "batch_size": 24,
+  "workers": 4,
+  "learning_rate": 0.0001,
+  "weight_decay": 0.0001,
+  "patience": 15,
+  "mask_ratio": 0.3,
+  "ssl_epochs": 50,
+  "sml_epochs": 150,
+  "model": {
+    "refinement_width": 192,
+    "refinement_heads": 8,
+    "refinement_ffn": 1536,
+    "refinement_layers": 3,
+    "foreground_queries": 1,
+    "reconstruction_channels": [
+      256,
+      128,
+      64,
+      32
+    ],
+    "refinement_layer_scale": true,
+    "refinement_attention_float32": true
+  }
+}

@@ -1,272 +1,350 @@
 # MSS-Trans-Net
 
-Implementation prepared for [kanwaal/MSS-TransNet](https://github.com/kanwaal/MSS-TransNet)
-from the supplied **MSS_Trans_Net_updated.zip** manuscript:
+**Multitask semi-supervised learning with transformer-based network for breast
+cancer diagnosis in ultrasound scans**
 
-> MSS-Trans-Net: Multitask semi-supervised learning with transformer-based network
-> for breast cancer diagnosis in ultrasound scans — Mehreen Kanwal and Yunsik Son.
+Mehreen Kanwal and Yunsik Son, Department of Computer Science and Artificial
+Intelligence, Dongguk University, Seoul, Republic of Korea.
 
-This release implements the updated manuscript's four-branch model and evaluation
-procedure. It is a new implementation of that specification, **not the previous
-deeper-head export or a checkpoint release**. No trained/pretrained weights, images,
-patient metadata, authentication credentials, or historical result tables are included.
-No manuscript performance is claimed for this newly implemented code without training.
+## Description
 
-## TransUNet 2024 credit and backbone
+MSS-Trans-Net is a segmentation-prioritized multitask framework for breast
+ultrasound images. A shared hybrid CNN–transformer encoder (R50–ViT-B/16) feeds
+four branches:
 
-**The segmentation encoder–decoder is based on TransUNet by Chen et al.** Please
-credit and cite their work when using this repository:
+- lesion segmentation: CNN decoding followed by prediction-guided transformer
+  refinement;
+- diagnostic classification: normal, benign or malignant;
+- auxiliary relative-area regression;
+- masked-image reconstruction.
 
-Chen et al. (2024), *TransUNet: Rethinking the U-Net architecture design for medical
-image segmentation through the lens of transformers*. Medical Image Analysis,
-97, 103280. [DOI: 10.1016/j.media.2024.103280](https://doi.org/10.1016/j.media.2024.103280).
+Training has two phases:
 
-* Official 2D implementation: [Beckschen/TransUNet](https://github.com/Beckschen/TransUNet).
-  Its R50–ViT-B/16 encoder, CNN upsampling decoder and skip connections are retained.
-* Official 2024 query-decoder implementation:
-  [Beckschen/3D-TransUNet](https://github.com/Beckschen/3D-TransUNet).
-  The packaged masked transformer decoder is a source-derived **2D adaptation**
-  retaining their query features/positions, multiscale masked cross-attention,
-  self-attention, FFN, normalization and three-layer mask-embedding MLP.
-* The authors acknowledge Mask2Former; its attribution and the inherited positional
-  encoding notices/licenses are preserved here as well.
+1. **Self-supervised learning (SSL).** The ImageNet-initialized encoder learns
+   to reconstruct randomly masked patches of training images. No annotations
+   are used.
+2. **Semi-supervised multitask learning (SML).** All four branches are then
+   trained jointly, with segmentation as the primary objective.
 
-The encoder–decoder is credited to TransUNet. The MSS additions are masked
-reconstruction, breast diagnosis/area heads, and the two-stage multitask training
-procedure. The adaptation does not claim the full volumetric nnU-Net-based model is
-unchanged. Exact sources, dimensional changes and numerical parity tests are in
-[TRANSUNET_2024.md](docs/TRANSUNET_2024.md). Full BibTeX is in
-[REFERENCES.bib](REFERENCES.bib); GitHub citation metadata is in `CITATION.cff`.
+This repository provides a PyTorch implementation with:
 
-## Method
+- data preparation for BUSI (five-fold evaluation) and BUS-BRA (patient-disjoint
+  test set);
+- two-phase training with validation-based checkpoint selection;
+- evaluation, five-fold pooling, and cross-dataset transfer to BUS-BRA (zero-shot,
+  limited-target fine-tuning and full-target training);
+- prediction for a single image.
+
+Datasets and model weights are not included.
 
 ```mermaid
 flowchart LR
-    I[RGB image 224 x 224] --> E[R50 + ViT-B/16 shared encoder]
-    E --> C[CNN decoding with encoder skips]
-    C --> Q[Prediction-guided transformer refinement]
+    I[Ultrasound image 224 x 224] --> E[Shared R50-ViT-B/16 encoder]
+    E --> C[CNN decoder with skip connections]
+    C --> Q[Transformer refinement]
     Q --> S[Lesion mask]
-    E --> H[Mean token pooling]
-    H --> D[Independent 256 / 128 / 64 deep heads]
-    D --> Z[Diagnostic category]
-    D --> A[Auxiliary relative area]
-    I --> M[59 random 16 x 16 patches hidden]
-    M --> E2[Same shared encoder: all 196 tokens]
-    E2 --> R[CNN RGB reconstruction decoder]
-    R --> L[Hidden-pixel reconstruction loss]
+    E --> P[Mean-pooled tokens]
+    P --> K[Classification head]
+    P --> A[Relative-area head]
+    I --> M[59 of 196 patches hidden]
+    M --> E2[Shared encoder, same weights]
+    E2 --> R[CNN reconstruction decoder]
+    R --> X[Reconstructed image]
 ```
 
-* SSL: ImageNet-initialized encoder and CNN reconstruction decoder learn from only
-  optimization-training image content. No reference masks or diagnostic targets enter SSL.
-* SML: unmasked views drive segmentation, classification and area; masked views of
-  the **same training images** drive reconstruction. All branches share the encoder.
-* Masking: **59/196 patches**, approximately **30.10%**, with **16×16** random blocks.
-  The full masked image and all 196 tokens enter the encoder. No MAE visible-token removal.
-* Heads: mean pooling → Dropout(0.2) → 256/GELU/Dropout → 128/GELU/Dropout →
-  linear 64 → task readout. Classification and area heads have independent weights.
-* Segmentation: original CNN spatial decoding plus learnable queries, predicted-mask
-  cross-attention, self-attention and feed-forward refinement. Ground truth never
-  creates the decoder attention mask. Reconstruction masks are a different mechanism.
-* Joint loss: `0.90*segmentation + (classification + area + reconstruction)/30`.
+## Dataset information
 
-The 2024 decoder's internal defaults now follow the authors' configuration: width
-192, eight heads, FFN width 1536, three layers, LayerScale and float32 attention.
-The MSS binary foreground task uses their fixed-class query path with one query,
-while retaining the manuscript's structure loss. Remaining choices are identified
-explicitly. Read [MANUSCRIPT_ALIGNMENT.md](docs/MANUSCRIPT_ALIGNMENT.md) and
-[IMPLEMENTATION_CHOICES.md](docs/IMPLEMENTATION_CHOICES.md) before a reproduction claim.
+| | BUSI | BUS-BRA |
+|---|---|---|
+| Content | 780 breast ultrasound images (133 normal, 437 benign, 210 malignant) from 600 female patients, with reference lesion masks. Acquired in 2018 at Baheya Hospital, Cairo, Egypt | 1,875 lesion images (1,268 benign, 607 malignant) from 1,064 patients, with reference lesion masks, BI-RADS categories and patient (`Case`) identifiers |
+| Source | https://scholar.cu.edu.eg/?q=afahmy/pages/dataset (archive `Dataset_BUSI.zip`) | https://doi.org/10.5281/zenodo.8231412 (version 1.0, archive `BUSBRA.zip`) |
+| Terms | Publicly released by the dataset authors. Cite Al-Dhabyani et al. (2020) | Creative Commons Attribution 4.0 International. Cite Gómez-Flores et al. (2024) |
+| Use here | Five-fold training and evaluation | Cross-dataset evaluation |
 
-## Install
-
-Python 3.10+; the supplied manuscript records Python 3.11.7 / PyTorch 2.10.0 / CUDA
-12.8 on RTX A6000. Runtime metadata records the environment actually used.
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-# Install the PyTorch build appropriate for your CUDA/CPU environment first.
-python -m pip install -r requirements.txt
-python -m pip install -e '.[test]'
-python -B -m pytest -q
-```
-
-To constrain PyTorch to the manuscript's version, install
-`requirements-manuscript.txt` instead of `requirements.txt`. Select the matching
-CUDA build for your hardware; no claim is made that other machines reproduce the
-same floating-point trajectory or timing.
-
-The package bundles the small, licensed TransUNet Python source needed by its hybrid
-encoder/CNN decoder and a source-derived 2D port of the 2024 transformer decoder.
-No runtime repository clone or automatic model download occurs.
-
-## Supply ImageNet initialization separately
-
-Obtain the TransUNet **R50+ViT-B_16.npz** ImageNet hybrid initialization from the
-[upstream TransUNet project](https://github.com/Beckschen/TransUNet), and store it as:
+The datasets are not redistributed in this repository. Download them from the
+sources above, use them under their terms, and keep the original folder layout:
 
 ```text
-weights/R50+ViT-B_16.npz
+Dataset_BUSI_with_GT/
+  normal/      normal (1).png,     normal (1)_mask.png, ...
+  benign/      benign (1).png,     benign (1)_mask.png, ...
+  malignant/   malignant (1).png,  malignant (1)_mask.png, ...
+BUSBRA/
+  bus_data.csv
+  Images/      bus_0001-l.png, ...
+  Masks/       mask_0001-l.png, ...
 ```
 
-Manuscript training commands require this file. `--random-init` is an explicit
-alternative for synthetic checks or new experiments; it is **not** the manuscript's
-initialization. Trained and initialization weights are excluded by `.gitignore`.
+Some BUSI images have more than one mask (`_mask_1.png`, ...); these are merged
+by pixelwise union. BUSI has no patient identifiers, so its folds are split by
+image. BUS-BRA splits keep all images of a patient in the same partition.
 
-## BUSI: five folds with independent validation
+## Code information
 
-Place the complete BUSI release in its original `normal`, `benign`, and `malignant`
-folders, each retaining the matching `_mask*.png` files. Multiple masks are unioned.
+| Path | Purpose |
+|---|---|
+| `mss_transnet/model.py` | Network: encoder, segmentation branch, classification and area heads, reconstruction branch |
+| `mss_transnet/losses.py` | Segmentation structure loss, hidden-patch reconstruction loss, class weights, area decoding |
+| `mss_transnet/data.py` | Image and mask loading, augmentation, and split preparation (`python -m mss_transnet.data`) |
+| `mss_transnet/engine.py` | Two-phase training with validation-based checkpoint selection (`python -m mss_transnet.engine`) |
+| `mss_transnet/evaluate.py` | Test evaluation, five-fold pooling and five-model averaging (`python -m mss_transnet.evaluate`) |
+| `mss_transnet/metrics.py` | Segmentation and classification metrics |
+| `configs/default.json` | Training configuration (also packaged as `mss_transnet/configs/default.json`) |
+| `mss_transnet/_vendor/` | Third-party network components (see `NOTICE.md`) |
+| `scripts/run_busi.py` | Five-fold BUSI training, evaluation and pooling |
+| `scripts/run_busbra.py` | BUS-BRA zero-shot, limited-target and full-target experiments |
+| `scripts/predict.py` | Prediction for one image |
+| `tests/` | Unit tests (`test_method.py`) and a CPU integration check (`run_end_to_end.py`) on synthetic data |
+
+## Requirements
+
+- Python 3.10 or later.
+- PyTorch 2.x. A CUDA GPU is needed for training; `requirements-pinned.txt` pins
+  PyTorch 2.10.0, so install its CUDA 12.8 build.
+- numpy, Pillow, scipy, scikit-learn and ml-collections (`requirements.txt`).
+- pytest, for the tests.
+- The ImageNet-pretrained `R50+ViT-B_16.npz` hybrid weights distributed with
+  TransUNet (https://github.com/Beckschen/TransUNet), saved as
+  `weights/R50+ViT-B_16.npz`.
+
+## Usage instructions
+
+### 1. Install
 
 ```bash
-python -m mss_transnet.data --dataset BUSI \
-  --root /path/to/Dataset_BUSI_with_GT --output data/busi_folds --seed 42
+git clone https://github.com/kanwaal/MSS-TransNet.git
+cd MSS-TransNet
+python -m venv .venv
+source .venv/bin/activate            # Windows: .venv\Scripts\activate
+# Install the PyTorch build for your CUDA version first (https://pytorch.org).
+python -m pip install -r requirements.txt     # or requirements-pinned.txt
+python -m pip install -e ".[test]"
+python -m pytest -q
+```
 
-CUDA_VISIBLE_DEVICES=0 python scripts/run_busi.py \
-  --manifests data/busi_folds --output runs/BUSI_A4 \
+### 2. Add the ImageNet initialization
+
+Place `R50+ViT-B_16.npz` in `weights/`. Training commands load it with
+`--pretrained weights/R50+ViT-B_16.npz`.
+
+### 3. Prepare the data splits
+
+```bash
+python -m mss_transnet.data --dataset BUSI --root /path/to/Dataset_BUSI_with_GT \
+  --output data/busi_folds --seed 42
+python -m mss_transnet.data --dataset BUS-BRA --root /path/to/BUSBRA \
+  --output data/busbra --seed 42
+```
+
+- **BUSI** produces `fold_01.csv` to `fold_05.csv`. Each fold holds out 156
+  test images (20%). Its remaining 624 images are split into 593 training and
+  31 validation images. Every image is tested exactly once across the five
+  folds.
+- **BUS-BRA** produces `full.csv` and `limited.csv`. Both share one
+  patient-disjoint 20% test set. `full.csv` trains on all remaining patients;
+  `limited.csv` trains on 20% of them. Each setting holds out 5% of its training
+  patients for validation.
+
+Each manifest comes with a `.json` file recording image and patient counts and
+the manifest's SHA-256 hash.
+
+### 4. BUSI: five-fold training and evaluation
+
+```bash
+python scripts/run_busi.py --manifests data/busi_folds --output runs/busi \
   --pretrained weights/R50+ViT-B_16.npz
 ```
 
-With 780 images, each outer test fold contains 156 images. The development pool
-reserves 31 validation images, leaving 593 optimization-training images. Each image
-is tested once; normal images remain in training and three-class evaluation.
+For each fold, the script runs SSL, then SML, then evaluates the selected
+checkpoint on that fold's test images. Results go to two places:
 
-BUSI segmentation reporting pools **647 lesion images**, excludes **133 normal
-images**, and computes image-level mean and sample SD. Three-class classification
-pools all **780 images** with macro precision, recall, specificity and F1. These are
-generated results after training, not figures copied from the manuscript.
+- `runs/busi/fold_XX/test/`: per-image CSV files and `summary.json` for each
+  fold;
+- `runs/busi/pooled/pooled_summary.json`: segmentation on the 647 lesion images
+  and classification on all 780 images.
 
-Summary metrics and image SD are fractions (multiply by 100 for percentage units).
-Confusion matrices explicitly labeled `row_percent` are already in percent; ROC
-coordinates and AUC remain on the [0,1] scale.
-
-Patient identifiers are unavailable in this BUSI organization: these are image-level
-folds, not verified patient-disjoint folds. Split files and counts are exported for audit.
-
-## Training schedule and checkpoint selection
-
-`configs/manuscript.json` defines the default protocol:
-
-| Setting | Value |
-|---|---|
-| SSL allocation | 50 epochs |
-| SML maximum | 150 epochs |
-| Segmentation-only A0 maximum | 200 epochs |
-| SML stopping | 15 epochs without validation improvement |
-| Optimizer | AdamW, lr 1e-4, weight decay 1e-4 |
-| Schedule | cosine, restarted for each phase |
-| Batch | 24 |
-| AMP / gradient clipping | CUDA AMP / global norm 0.5 |
-| Masking | 59 random 16×16 patches |
-
-SSL retains the lowest **validation reconstruction** loss; SML retains the lowest
-**validation active objective**. The same held-out validation partition serves both
-phases and never contributes gradients. SSL completes its fixed 50-epoch allocation;
-SML can stop earlier. Validation reconstruction uses fixed random masks to reduce
-monitor noise; this is a documented implementation choice. Test data is loaded only
-after the selected final checkpoint is frozen. Every experiment uses a new output
-directory to avoid silently overwriting or reusing another run.
-
-Run a single fold if needed:
+To run a single fold:
 
 ```bash
 python -m mss_transnet.engine --manifest data/busi_folds/fold_01.csv \
-  --output runs/single_fold --pretrained weights/R50+ViT-B_16.npz
-python -m mss_transnet.evaluate single \
-  --checkpoint runs/single_fold/sml/best.pt \
-  --manifest data/busi_folds/fold_01.csv --output runs/single_fold/test
+  --output runs/fold_01 --pretrained weights/R50+ViT-B_16.npz
+python -m mss_transnet.evaluate single --checkpoint runs/fold_01/sml/best.pt \
+  --manifest data/busi_folds/fold_01.csv --output runs/fold_01/test
 ```
 
-## BUS-BRA: a common patient-disjoint target test set
-
-The distributor's `bus_data.csv`, `Images/` and `Masks/` are required.
+### 5. BUS-BRA: cross-dataset evaluation
 
 ```bash
-python -m mss_transnet.data --dataset BUS-BRA \
-  --root /path/to/BUSBRA --output data/busbra --seed 42
-```
-
-This creates `full.csv` and `limited.csv` sharing one patient-disjoint 20% target
-test set. Limited adaptation samples 20% of the remaining development patients.
-Each setting reserves 5% of its available training pool for validation. All images
-from a patient stay together. Counts are recorded because the manuscript does not
-provide exact target split counts or its original membership lists.
-
-For five-source transfer, provide the five BUSI final checkpoints in fold order:
-
-```bash
+# Zero-shot: evaluate the five BUSI fold models separately
 python scripts/run_busbra.py --setting zero-shot --manifest data/busbra/full.csv \
-  --output runs/BUSBRA_zero --source-checkpoints \
-  runs/BUSI_A4/fold_01/sml/best.pt runs/BUSI_A4/fold_02/sml/best.pt \
-  runs/BUSI_A4/fold_03/sml/best.pt runs/BUSI_A4/fold_04/sml/best.pt \
-  runs/BUSI_A4/fold_05/sml/best.pt
+  --output runs/busbra_zero --source-checkpoints \
+  runs/busi/fold_01/sml/best.pt runs/busi/fold_02/sml/best.pt \
+  runs/busi/fold_03/sml/best.pt runs/busi/fold_04/sml/best.pt \
+  runs/busi/fold_05/sml/best.pt
 
+# Limited-target fine-tuning of each BUSI fold model
 python scripts/run_busbra.py --setting limited --manifest data/busbra/limited.csv \
-  --output runs/BUSBRA_limited --source-checkpoints \
-  runs/BUSI_A4/fold_01/sml/best.pt runs/BUSI_A4/fold_02/sml/best.pt \
-  runs/BUSI_A4/fold_03/sml/best.pt runs/BUSI_A4/fold_04/sml/best.pt \
-  runs/BUSI_A4/fold_05/sml/best.pt
+  --output runs/busbra_limited --source-checkpoints \
+  runs/busi/fold_01/sml/best.pt runs/busi/fold_02/sml/best.pt \
+  runs/busi/fold_03/sml/best.pt runs/busi/fold_04/sml/best.pt \
+  runs/busi/fold_05/sml/best.pt
 
+# Full-target training from ImageNet initialization
 python scripts/run_busbra.py --setting full-target --manifest data/busbra/full.csv \
-  --output runs/BUSBRA_full --pretrained weights/R50+ViT-B_16.npz
+  --output runs/busbra_full --pretrained weights/R50+ViT-B_16.npz
 ```
 
-Zero-shot evaluates each source model separately. Binary diagnosis renormalizes the
-benign/malignant probabilities, using an equivalent stable two-logit softmax. Limited
-adaptation freezes the encoder and trains all four branches, without another SSL stage
-or BUSI replay. Full target starts independently from ImageNet, excludes BUSI-trained
-weights, and performs target-only SSL then SML. Validation/test images never enter SSL
-optimization. There is no BUS-BRA five-fold target training in this protocol.
+Zero-shot and limited-target results are averaged over the five models in
+`target_summary.json`.
 
-Transfer aggregation averages five model-level segmentation means, five row-normalized
-confusion matrices and five ROC curves. It does **not** ensemble their probabilities.
-
-## Ablations
-
-`--ablation` accepts A0, A1, A1-unmasked, A2, A3 and A4. A0 retains the official
-TransUNet CNN segmentation pathway, with the stated structure-loss exception and
-no SSL. The other variants include query refinement. A1-unmasked is the matched
-unmasked-pretraining control. Intermediate objective coefficients absent from the
-manuscript are identified as choices in `docs/IMPLEMENTATION_CHOICES.md`.
-
-The 15 external comparator training pipelines and the SSMT-Net authors' complete
-adaptation are not distributed here. This is the proposed-method implementation,
-not a claim to have reproduced those external methods or their published scores.
-
-## Predict
+### 6. Predict one image
 
 ```bash
-python scripts/predict.py --checkpoint runs/single_fold/sml/best.pt \
-  --image /path/to/ultrasound.png --output outputs/example
+python scripts/predict.py --checkpoint runs/busi/fold_01/sml/best.pt \
+  --image /path/to/image.png --output outputs/example
 ```
 
-Use `--binary` for BUS-BRA with a BUSI source checkpoint. Outputs include a 224×224
-lesion mask, a convenience mask resized to the original image, diagnostic probabilities
-and the auxiliary relative-area scalar. Reconstruction is not executed. The auxiliary
-scalar describes image occupancy, not calibrated physical size; its accuracy is not
-a claimed endpoint of the manuscript. Only load checkpoints from trusted sources.
+The output folder contains three files:
 
-## Checkpoint compatibility
+- `mask_224.png`: the lesion mask at 224 × 224;
+- `mask_original_size.png`: the same mask at the input image's size;
+- `prediction.json`: class probabilities and the relative lesion area, in
+  percent.
 
-Version 1.1 replaces the earlier custom refinement with the authors' source-derived
-decoder. Its state-dict keys and parameter shapes therefore differ from version 1.0.
-Earlier custom-refinement checkpoints are not directly compatible; this source
-package contains no weights and does not silently perform a partial checkpoint load.
+Add `--binary` to report benign/malignant probabilities from a three-class BUSI
+model.
 
-## Traceability and limitations
+### Output conventions
 
-The correspondence checklist identifies manuscript lines/equations and implementation
-locations. `SOURCE_PROVENANCE.json` records the exact manuscript archive SHA256 and
-the unmodified vendor source hashes. Tests use synthetic inputs, check phase freezing,
-hidden-pixel loss, validation/test separation, attention-mask independence and reporting.
-They do not substantiate a clinical or benchmark performance claim.
+Every run directory contains:
 
-The source-conformance tests compare the 2D encoder/CNN output to the official
-backbone, and compare the adapted transformer decoder's predictions to the actual
-upstream decoder on depth-one features with positional encoding disabled to isolate
-the dimension-independent operations. The upstream positional-encoding source itself
-is copied unchanged and selects its existing 2D path at runtime.
+- `experiment.json`;
+- for each phase, a `best.pt`, `history.json` and `selection.json`.
 
-The manuscript omits original split memberships and numerical reconstruction/refinement
-details, so a bitwise reproduction of its original experiments cannot be certified.
-No unpublished weights or performance values are invented to fill those gaps.
-The original TransUNet Apache-2.0 license is retained; see [NOTICE.md](NOTICE.md).
+Metric values in JSON files are fractions between 0 and 1, except confusion
+matrices labelled `row_percent`, which are percentages.
+
+## Methodology
+
+**Preprocessing and augmentation.**
+
+- RGB images are scaled to [0, 1] and resized to 224 × 224 with bilinear
+  interpolation.
+- Masks are resized with nearest-neighbour interpolation.
+- During training, each image–mask pair is flipped horizontally and
+  vertically (each with probability 0.5), then rotated by 0°, 90°, 180° or
+  270°. Image and mask receive the same transformation.
+- ImageNet channel normalization is applied inside the model.
+
+**Network.**
+
+- **Encoder.** R50–ViT-B/16 hybrid encoder (12 transformer layers, 12 heads,
+  width 768), giving 196 tokens of dimension 768. It is initialized from
+  ImageNet weights.
+- **Segmentation branch.** A CNN decoder with encoder skip connections
+  produces features at 28, 56, 112 and 224 pixels. A masked transformer decoder
+  then refines them: three layers, width 192, 8 heads, feed-forward width 1536,
+  LayerScale, and one learnable foreground query. Each layer restricts
+  cross-attention to the foreground predicted by the previous layer. A 0.5
+  threshold on the sigmoid output gives the binary mask.
+- **Classification and relative-area heads.** Mean-pooled tokens →
+  Dropout(0.2) → 256 → GELU → Dropout(0.2) → 128 → GELU → Dropout(0.2) → 64 →
+  output. The output is 3 classes for BUSI, 2 for BUS-BRA, and 1 value for the
+  area head. The two heads have separate weights.
+- **Reconstruction branch.** 59 of the 196 16 × 16 patches (30.1%) are chosen at
+  random and set to black. The whole masked image passes through the encoder. A
+  CNN decoder (four 2× upsampling stages with 256, 128, 64 and 32 channels, then
+  a sigmoid RGB output) reconstructs the image.
+
+**Objectives.**
+
+- *Segmentation:* boundary-weighted binary cross-entropy plus weighted IoU,
+  with pixel weights w = 1 + 5·|AvgPool₃₁(y) − y|.
+- *Reconstruction:* mean squared error over the hidden-patch pixels only.
+- *Classification:* cross-entropy with inverse-frequency class weights computed
+  on the training split.
+- *Relative area:* Smooth L1 loss on log(1 + a), where a is the lesion's
+  percentage of the original-resolution image. Predictions are mapped back with
+  exp(clip(t, 0, log 101)) − 1.
+- *SML objective:* 0.90 × segmentation + (classification + area +
+  reconstruction) / 30.
+
+**Training.**
+
+- **SSL** trains the encoder and reconstruction branch for 50 epochs on training
+  images, without masks or labels. The checkpoint with the lowest validation
+  reconstruction loss is kept. Validation uses fixed random masks.
+- **SML** starts from the SSL checkpoint and trains all branches for up to 150
+  epochs. It stops early after 15 epochs without validation improvement. The
+  checkpoint with the lowest validation objective is kept.
+- **Optimizer:**
+  - AdamW, learning rate 1e-4, weight decay 1e-4;
+  - cosine schedule, restarted in each phase;
+  - batch size 24;
+  - mixed precision on CUDA;
+  - gradient-norm clipping at 0.5;
+  - seed 42.
+- Validation images never contribute gradients. Test images are read only
+  after the final checkpoint has been selected.
+
+**Evaluation.**
+
+- **BUSI.** Predictions from the five held-out folds are pooled, so each image
+  is evaluated once.
+  - Segmentation uses the 647 lesion images. Metrics are Dice, IoU, precision,
+    sensitivity, specificity and pixel accuracy, given as the mean and standard
+    deviation over images.
+  - Three-class classification uses all 780 images. Metrics are accuracy and
+    macro-averaged precision, recall, specificity and F1.
+- **BUS-BRA** (benign vs. malignant) uses the common patient-disjoint test set:
+  - **Zero-shot:** each of the five BUSI fold models is evaluated separately.
+    The malignant probability is renormalized over the two lesion classes,
+    p_M / (p_B + p_M).
+  - **Limited-target fine-tuning:** each BUSI fold model is fine-tuned on
+    `limited.csv` with the encoder frozen. All four branches are trained, with
+    no additional SSL.
+  - **Full-target training:** one model is trained on `full.csv` from ImageNet
+    initialization, with SSL followed by SML and without BUSI weights.
+  - Zero-shot and limited-target results are averaged over the five models.
+    This covers segmentation means, row-normalized confusion matrices and ROC
+    curves; predictions are not ensembled.
+
+All settings are in `configs/default.json`.
+
+## Citations
+
+If you use this code, please cite:
+
+> Kanwal M, Son Y. MSS-Trans-Net: Multitask semi-supervised learning with
+> transformer-based network for breast cancer diagnosis in ultrasound scans.
+> Manuscript under review, PeerJ Computer Science, 2026.
+
+Datasets:
+
+- Al-Dhabyani W, Gomaa M, Khaled H, Fahmy A. 2020. Dataset of breast ultrasound
+  images. *Data in Brief* 28:104863. https://doi.org/10.1016/j.dib.2019.104863
+- Gómez-Flores W, Gregorio-Calas MJ, de Albuquerque Pereira WC. 2024. BUS-BRA: a
+  breast ultrasound dataset for assessing computer-aided diagnosis systems.
+  *Medical Physics* 51(4):3110–3123. https://doi.org/10.1002/mp.16812
+  (dataset: https://doi.org/10.5281/zenodo.8231412)
+
+The encoder and decoder components build on TransUNet (Chen et al., 2024,
+*Medical Image Analysis* 97:103280, https://doi.org/10.1016/j.media.2024.103280).
+
+BibTeX entries are in `REFERENCES.bib`; citation metadata is in `CITATION.cff`.
+
+## License and contribution guidelines
+
+The code in this repository is released under the Apache License 2.0 (`LICENSE`).
+Third-party components in `mss_transnet/_vendor/` keep their original licenses,
+as listed in `NOTICE.md`. The datasets and pretrained weights are not covered by
+this license and remain under their providers' terms.
+
+Contributions are welcome:
+
+- Report bugs or ask questions through GitHub issues. Include your environment
+  and the command you ran.
+- Submit changes as pull requests with a short description, and run
+  `python -m pytest -q` first.
+- By contributing, you agree that your contribution is licensed under the
+  Apache License 2.0.
