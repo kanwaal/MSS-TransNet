@@ -1,0 +1,49 @@
+{
+  "validation_date_utc": "2026-11-02T07:44:28.775684+00:00",
+  "synthetic_unit_tests": {
+    "passed": 10,
+    "failed": 0,
+    "final_run_seconds": 7.58
+  },
+  "cuda_amp_integration": {
+    "passed": true,
+    "synthetic_only": true,
+    "source_derived_2024_decoder": true,
+    "ssl_then_sml": true,
+    "actual_optimizer_updates": true,
+    "test_pixels_never_loaded_during_training": true,
+    "limited_encoder_state_unchanged": true,
+    "limited_extra_ssl": false,
+    "zero_shot_binary_mapping": true,
+    "full_target_rejects_busi_checkpoint": true
+  },
+  "wheel_build": {
+    "passed": true,
+    "packaged_default_config": true,
+    "official_source_decoder_and_all_licenses_included": true
+  },
+  "cli_entry_points_checked": 6,
+  "trained_or_pretrained_weights_included": false,
+  "datasets_included": false,
+  "historical_scores_claimed_for_this_implementation": false,
+  "exact_original_decoder_hyperparameters_available": false,
+  "unspecified_details_documented": "docs/IMPLEMENTATION_CHOICES.md",
+  "public_repository_upload_performed": false,
+  "release_version": "1.1.0",
+  "upstream_parity": {
+    "official_2d_encoder_weights_exact": true,
+    "official_2d_cnn_decoder_weights_exact": true,
+    "official_2d_baseline_segmentation_forward_exact": true,
+    "source_2024_depth_one_decoder_masks_and_query_logits_close": true,
+    "source_2024_intermediate_masks_close": true,
+    "comparison_rtol": 1e-05,
+    "comparison_atol": 1e-06,
+    "depth_one_comparison_spatial_position_encoding_enabled": false,
+    "runtime_position_source_copied_unchanged": true
+  },
+  "encoder_decoder_credit": "Chen et al., Medical Image Analysis 97 (2024) 103280; DOI 10.1016/j.media.2024.103280",
+  "encoder_decoder_source_document": "docs/TRANSUNET_2024.md",
+  "dimensional_adaptation": "Official 2D R50-ViT/CNN backbone plus source-derived 2D adaptation of the companion query decoder",
+  "previous_custom_refinement_removed": true,
+  "previous_custom_refinement_checkpoints_compatible": false
+}

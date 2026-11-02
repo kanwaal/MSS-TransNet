@@ -1,0 +1,53 @@
+cff-version: 1.2.0
+message: "Please cite the MSS-Trans-Net manuscript and the TransUNet 2024 reference below when using this implementation."
+title: "MSS-Trans-Net: breast ultrasound multitask implementation based on TransUNet"
+type: software
+version: 1.1.0
+repository-code: "https://github.com/kanwaal/MSS-TransNet"
+authors:
+  - family-names: Kanwal
+    given-names: Mehreen
+  - family-names: Son
+    given-names: Yunsik
+references:
+  - type: article
+    title: "TransUNet: Rethinking the U-Net architecture design for medical image segmentation through the lens of transformers"
+    authors:
+      - family-names: "Chen"
+        given-names: "Jieneng"
+      - family-names: "Mei"
+        given-names: "Jieru"
+      - family-names: "Li"
+        given-names: "Xianhang"
+      - family-names: "Lu"
+        given-names: "Yongyi"
+      - family-names: "Yu"
+        given-names: "Qihang"
+      - family-names: "Wei"
+        given-names: "Qingyue"
+      - family-names: "Luo"
+        given-names: "Xiangde"
+      - family-names: "Xie"
+        given-names: "Yutong"
+      - family-names: "Adeli"
+        given-names: "Ehsan"
+      - family-names: "Wang"
+        given-names: "Yan"
+      - family-names: "Lungren"
+        given-names: "Matthew P."
+      - family-names: "Zhang"
+        given-names: "Shaoting"
+      - family-names: "Xing"
+        given-names: "Lei"
+      - family-names: "Lu"
+        given-names: "Le"
+      - family-names: "Yuille"
+        given-names: "Alan"
+      - family-names: "Zhou"
+        given-names: "Yuyin"
+    journal: Medical Image Analysis
+    volume: "97"
+    start: "103280"
+    year: 2024
+    doi: 10.1016/j.media.2024.103280
+    url: "https://doi.org/10.1016/j.media.2024.103280"
